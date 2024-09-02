@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { ThumbUpIcon } from "@heroicons/react/outline";
 
-function CommentList() {
+function CommentList({ filter }) {
   const [comments, setComments] = useState([]);
 
   useEffect(() => {
-    const q = query(collection(db, "comments"), orderBy("timestamp", "desc"));
+    const q = query(
+      collection(db, "comments"),
+      filter === 'latest' ? orderBy("timestamp", "desc") : orderBy("likes", "desc")
+    );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [filter]);
+
+  const handleLike = async (id, currentLikes) => {
+    const commentRef = doc(db, "comments", id);
+    await updateDoc(commentRef, {
+      likes: currentLikes + 1
+    });
+  };
 
   return (
     <div className="mt-4">
@@ -35,8 +46,15 @@ function CommentList() {
             </div>
           )}
           <div className="flex items-center mt-2">
-            <ThumbUpIcon className="w-5 h-5 text-gray-500 mr-2" />
-            <span>{comment.likes}</span>
+            <button
+              onClick={() => handleLike(comment.id, comment.likes)}
+              className="flex items-center text-gray-500"
+            >
+              <ThumbUpIcon className="w-5 h-5 mr-1" />
+              {comment.likes}
+            </button>
+            <span className="ml-4">Reply</span>
+            <span className="ml-4">{Math.floor((Date.now() - comment.timestamp?.toDate()) / 3600000)} hour</span>
           </div>
         </div>
       ))}

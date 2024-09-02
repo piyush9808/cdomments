@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { db, storage, auth } from "../firebase";
+import { db, storage } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { useAuthState } from "react-firebase-hooks/auth";
 
-function CommentBox() {
+function CommentBox({ user }) {
   const [comment, setComment] = useState("");
   const [file, setFile] = useState(null);
-  const [user] = useAuthState(auth);
 
   const handleSubmit = async () => {
     if (!comment.trim() && !file) return;
