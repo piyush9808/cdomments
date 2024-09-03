@@ -7,32 +7,30 @@ import { ThumbUpIcon, ReplyIcon, HeartIcon, EmojiHappyIcon, FireIcon, EmojiSadIc
 function CommentItem({ comment, user, renderReplies }) {
   const [replying, setReplying] = useState(false);
   const [hovering, setHovering] = useState(null);
-  const [likes, setLikes] = useState(comment.likes || 0);  
+  const [reactions, setReactions] = useState({
+    like: comment.reactions?.like || 0,
+    love: comment.reactions?.love || 0,
+    haha: comment.reactions?.haha || 0,
+    wow: comment.reactions?.wow || 0,
+    sad: comment.reactions?.sad || 0,
+  });
   const hoverTimer = useRef(null);
-
-  const handleLike = async () => {
-    try {
-      console.log("Like button clicked"); 
-      const commentRef = doc(db, "comments", comment.id);
-      await updateDoc(commentRef, {
-        likes: likes + 1,
-      });
-      console.log("Firestore updated successfully"); 
-      setLikes(likes + 1);  
-      console.log("Local state updated: ", likes + 1); 
-    } catch (error) {
-      console.error("Error updating likes: ", error);
-    }
-  };
 
   const handleReaction = async (reaction) => {
     try {
+      let updatedReactions = { ...reactions };
+      updatedReactions[reaction] += 1;
+
+      setReactions(updatedReactions); // Update local state first
+
+      const impressions = Object.values(updatedReactions).reduce((a, b) => a + b, 0);
+
       const commentRef = doc(db, "comments", comment.id);
       await updateDoc(commentRef, {
-        reaction: reaction,
-        impressions: (comment.impressions || 0) + 1,
+        reactions: updatedReactions,
+        likes: updatedReactions.like,
+        impressions: impressions,
       });
-      console.log("Reaction updated to:", reaction);
     } catch (error) {
       console.error("Error updating reaction: ", error);
     }
@@ -46,7 +44,7 @@ function CommentItem({ comment, user, renderReplies }) {
   const handleMouseLeave = () => {
     hoverTimer.current = setTimeout(() => {
       setHovering(null);
-    }, 1000); 
+    }, 1000);
   };
 
   const getReactionIcon = (reaction) => {
@@ -62,6 +60,28 @@ function CommentItem({ comment, user, renderReplies }) {
       default:
         return <ThumbUpIcon className="w-5 h-5 text-blue-500" />;
     }
+  };
+
+  const renderReactions = () => {
+    return (
+      <>
+        <div className="flex items-center text-gray-500 ml-2">
+          <ThumbUpIcon className="w-5 h-5 text-blue-500" />
+          <span className="ml-1">{reactions.like}</span>
+        </div>
+        {Object.entries(reactions).map(([reaction, count]) => {
+          if (reaction !== "like" && count > 0) {
+            return (
+              <div key={reaction} className="flex items-center text-gray-500 ml-2">
+                {getReactionIcon(reaction)}
+                <span className="ml-1">{count}</span>
+              </div>
+            );
+          }
+          return null;
+        })}
+      </>
+    );
   };
 
   return (
@@ -85,10 +105,9 @@ function CommentItem({ comment, user, renderReplies }) {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <button className="flex items-center text-gray-500" onClick={handleLike}>
-            {getReactionIcon(comment.reaction)}
-            {likes}
-          </button>
+          <div className="flex items-center">
+            {renderReactions()}
+          </div>
           {hovering === comment.id && (
             <div
               className="absolute top-0 left-0 mt-8 flex space-x-2 bg-white p-2 rounded-lg shadow-lg z-10"
@@ -123,7 +142,6 @@ function CommentItem({ comment, user, renderReplies }) {
         </button>
       </div>
 
-    
       {replying && (
         <div className="mt-4">
           <CommentBox
@@ -134,7 +152,6 @@ function CommentItem({ comment, user, renderReplies }) {
         </div>
       )}
 
-   
       {renderReplies(comment.id)}
     </div>
   );

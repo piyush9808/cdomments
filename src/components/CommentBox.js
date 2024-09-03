@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db, storage } from "../firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { PiPaperclip, PiPaperclipLight } from "react-icons/pi";
+
 
 function CommentBox({ user, parentId = null, onReply }) {
   const [comment, setComment] = useState('');
@@ -103,44 +105,34 @@ function CommentBox({ user, parentId = null, onReply }) {
       ></div>
 
       <div className="flex items-center justify-between border-t mt-2 pt-2">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4 ">
           <button
             type="button"
             onClick={() => handleFormatting('bold')}
-            className={`font-bold ${isBold ? 'text-black' : 'text-gray-500'} hover:text-black`}
+            className={`font-bold text-xl  ${isBold ? 'text-black' : 'text-gray-500'} hover:text-black`}
           >
             B
           </button>
           <button
             type="button"
             onClick={() => handleFormatting('italic')}
-            className={`italic ${isItalic ? 'text-black' : 'text-gray-500'} hover:text-black`}
+            className={`italic text-xl ${isItalic ? 'text-black' : 'text-gray-500'} hover:text-black`}
           >
             I
           </button>
           <button
             type="button"
             onClick={() => handleFormatting('underline')}
-            className={`underline ${isUnderline ? 'text-black' : 'text-gray-500'} hover:text-black`}
+            className={`underline text-xl ${isUnderline ? 'text-black' : 'text-gray-500'} hover:text-black`}
           >
             U
           </button>
           <label
             htmlFor="file-upload"
-            className="text-gray-500 hover:text-black cursor-pointer"
+            className="text-gray-500  hover:text-black cursor-pointer"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M4 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H4zm9.707 4.707a1 1 0 00-1.414-1.414L10 8.586 7.707 6.293a1 1 0 00-1.414 1.414l2.5 2.5a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <PiPaperclip className="size-5" />
+
           </label>
           <input
             id="file-upload"

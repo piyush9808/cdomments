@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 function CommentList({ filter, user }) {
   const [comments, setComments] = useState([]);
   const [lastVisible, setLastVisible] = useState(null);
+  const [firstVisible, setFirstVisible] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -32,6 +33,7 @@ function CommentList({ filter, user }) {
           limit(commentsPerPage)
         );
       } else if (direction === 'prev') {
+        // Load the previous page of comments, starting after the first visible comment in reverse order
         q = query(
           commentsRef,
           orderBy("timestamp", filter === "latest" ? "desc" : "asc"),
@@ -47,8 +49,16 @@ function CommentList({ filter, user }) {
           ...doc.data(),
         }));
 
-        setComments(fetchedComments);
-        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+        if (direction === 'next') {
+          setComments(fetchedComments); // Reset the comments to only show the current page
+          setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+          setFirstVisible(snapshot.docs[0]);
+        } else {
+          setComments(fetchedComments);
+          setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+          setFirstVisible(snapshot.docs[0]);
+        }
+
         setHasMore(snapshot.docs.length === commentsPerPage);
       } else {
         setHasMore(false);
