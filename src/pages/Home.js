@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CommentBox from '../components/CommentBox';
 import CommentList from '../components/CommentList';
-import { auth, db } from '../firebase'; // Make sure db is imported
+import { auth, db } from '../firebase';
 import { signOut } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
 
@@ -24,36 +24,36 @@ function Home({ user }) {
           <img
             src={user.photoURL}
             alt={user.displayName}
-            className="w-10 h-10 rounded-full mr-4"
+            className="w-12 h-12 rounded-full mr-4"
           />
-          <span className="font-bold">{user.displayName}</span>
+          <span className="font-bold text-lg">{user.displayName}</span>
         </div>
         <button
           onClick={() => signOut(auth)}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
         >
           Logout
         </button>
       </div>
       <CommentBox user={user} />
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-bold text-xl">Comments({commentCount})</h2>
-        <div>
+      <div className="flex justify-between items-center mt-6 mb-4">
+        <h2 className="font-bold text-2xl">Comments ({commentCount})</h2>
+        <div className="space-x-2">
           <button
             onClick={() => setFilter('latest')}
-            className={`px-4 py-2 ${filter === 'latest' ? 'bg-gray-200' : ''}`}
+            className={`px-4 py-2 rounded-lg ${filter === 'latest' ? 'bg-gray-200' : 'bg-white hover:bg-gray-100'} transition-colors`}
           >
             Latest
           </button>
           <button
             onClick={() => setFilter('popular')}
-            className={`px-4 py-2 ${filter === 'popular' ? 'bg-gray-200' : ''}`}
+            className={`px-4 py-2 rounded-lg ${filter === 'popular' ? 'bg-gray-200' : 'bg-white hover:bg-gray-100'} transition-colors`}
           >
             Popular
           </button>
         </div>
       </div>
-      <CommentList filter={filter} />
+      <CommentList filter={filter} user={user} />
     </div>
   );
 }

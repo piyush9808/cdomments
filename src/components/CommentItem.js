@@ -7,27 +7,35 @@ import { ThumbUpIcon, ReplyIcon, HeartIcon, EmojiHappyIcon, FireIcon, EmojiSadIc
 function CommentItem({ comment, user, renderReplies }) {
   const [replying, setReplying] = useState(false);
   const [hovering, setHovering] = useState(null);
-  const [likes, setLikes] = useState(comment.likes || 0);  // Local state for likes
+  const [likes, setLikes] = useState(comment.likes || 0);  
   const hoverTimer = useRef(null);
 
   const handleLike = async () => {
     try {
+      console.log("Like button clicked"); 
       const commentRef = doc(db, "comments", comment.id);
       await updateDoc(commentRef, {
         likes: likes + 1,
       });
-      setLikes(likes + 1);  // Update local state after Firestore update
+      console.log("Firestore updated successfully"); 
+      setLikes(likes + 1);  
+      console.log("Local state updated: ", likes + 1); 
     } catch (error) {
       console.error("Error updating likes: ", error);
     }
   };
 
   const handleReaction = async (reaction) => {
-    const commentRef = doc(db, "comments", comment.id);
-    await updateDoc(commentRef, {
-      reaction: reaction, // Store the selected reaction in Firestore
-      impressions: (comment.impressions || 0) + 1,
-    });
+    try {
+      const commentRef = doc(db, "comments", comment.id);
+      await updateDoc(commentRef, {
+        reaction: reaction,
+        impressions: (comment.impressions || 0) + 1,
+      });
+      console.log("Reaction updated to:", reaction);
+    } catch (error) {
+      console.error("Error updating reaction: ", error);
+    }
   };
 
   const handleMouseEnter = () => {
@@ -38,7 +46,7 @@ function CommentItem({ comment, user, renderReplies }) {
   const handleMouseLeave = () => {
     hoverTimer.current = setTimeout(() => {
       setHovering(null);
-    }, 1000); // 1 second delay before hiding reactions
+    }, 1000); 
   };
 
   const getReactionIcon = (reaction) => {
@@ -115,7 +123,7 @@ function CommentItem({ comment, user, renderReplies }) {
         </button>
       </div>
 
-      {/* Render the reply form if replying is true */}
+    
       {replying && (
         <div className="mt-4">
           <CommentBox
@@ -126,7 +134,7 @@ function CommentItem({ comment, user, renderReplies }) {
         </div>
       )}
 
-      {/* Render replies */}
+   
       {renderReplies(comment.id)}
     </div>
   );

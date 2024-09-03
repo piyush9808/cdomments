@@ -28,11 +28,10 @@ function CommentList({ filter, user }) {
         q = query(
           commentsRef,
           orderBy("timestamp", filter === "latest" ? "desc" : "asc"),
-          ...(lastVisible ? [startAfter(lastVisible)] : []), // Only include startAfter if lastVisible is defined
-          limit(commentsPerPage) // Always pass a positive limit
+          ...(lastVisible ? [startAfter(lastVisible)] : []),
+          limit(commentsPerPage)
         );
       } else if (direction === 'prev') {
-        // For simplicity, fetching the first page again; advanced handling requires storing all fetched data
         q = query(
           commentsRef,
           orderBy("timestamp", filter === "latest" ? "desc" : "asc"),
@@ -40,7 +39,7 @@ function CommentList({ filter, user }) {
         );
       }
 
-      const snapshot = await getDocs(q); // Using getDocs to fetch the documents
+      const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
         const fetchedComments = snapshot.docs.map((doc) => ({
@@ -51,14 +50,13 @@ function CommentList({ filter, user }) {
         setComments(fetchedComments);
         setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
         setHasMore(snapshot.docs.length === commentsPerPage);
-        // toast.success('Comments loaded successfully.');
       } else {
         setHasMore(false);
         toast.info('No more comments to load.');
       }
     } catch (error) {
       console.error("Error fetching comments: ", error);
-      // toast.error('Failed to load comments.');
+      toast.error('Failed to load comments.');
     } finally {
       setLoading(false);
     }
@@ -97,7 +95,7 @@ function CommentList({ filter, user }) {
     }
 
     return comments
-      .filter((comment) => !comment.parentId) // Only top-level comments
+      .filter((comment) => !comment.parentId)
       .map((comment) => (
         <CommentItem
           key={comment.id}
@@ -112,12 +110,12 @@ function CommentList({ filter, user }) {
     <div className="mt-4">
       {loading && <p>Loading comments...</p>}
       {renderComments()}
-
-      <div className="flex justify-between mt-4">
+      
+      <div className="flex justify-center mt-6">
         <button
           onClick={handlePrevPage}
           disabled={page === 1}
-          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors mr-4"
         >
           Previous
         </button>

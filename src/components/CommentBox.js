@@ -29,14 +29,14 @@ function CommentBox({ user, parentId = null, onReply }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    console.log("Handle submit triggered"); // Debugging: Check if function is triggered
+    console.log("Handle submit triggered"); 
   
     if (!user) {
       console.error("User is not defined. Make sure you are logged in.");
       return;
     }
   
-    console.log("User object:", user); // Debugging: Log the user object
+    console.log("User object:", user); 
   
     if (!user.displayName) {
       console.error("User displayName is undefined.");
@@ -55,7 +55,7 @@ function CommentBox({ user, parentId = null, onReply }) {
         const uploadTask = uploadBytesResumable(storageRef, file);
         await uploadTask;
         fileURL = await getDownloadURL(uploadTask.snapshot.ref);
-        console.log("File uploaded successfully:", fileURL); // Debugging: Log file URL
+        console.log("File uploaded successfully:", fileURL); 
       } catch (error) {
         console.error("Error uploading file:", error);
         return;
@@ -65,18 +65,18 @@ function CommentBox({ user, parentId = null, onReply }) {
     try {
       await addDoc(collection(db, "comments"), {
         content: comment,
-        author: user.displayName || "Anonymous", // Safe access with default value
+        author: user.displayName || "Anonymous", 
         uid: user.uid || "Unknown UID",
         photoURL: user.photoURL || "default-avatar-url",
         timestamp: serverTimestamp(),
         fileURL: fileURL,
         likes: 0,
-        parentId: parentId, // Attach parentId if this is a reply
+        parentId: parentId, 
       });
-      console.log("Comment added successfully"); // Debugging: Confirm comment was added
+      console.log("Comment added successfully"); 
   
-      setComment(''); // Clear the comment box after submitting
-      setFile(null); // Clear the file input
+      setComment('');
+      setFile(null); 
   
       if (onReply) {
         onReply();
