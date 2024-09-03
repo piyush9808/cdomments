@@ -1,63 +1,134 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
-import { ThumbUpIcon } from "@heroicons/react/outline";
+import { collection, query, orderBy, limit, startAfter, getDocs } from "firebase/firestore";
+import CommentItem from "./CommentItem";
+import { toast } from 'react-toastify';
 
-function CommentList({ filter }) {
+function CommentList({ filter, user }) {
   const [comments, setComments] = useState([]);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  const commentsPerPage = 8;
 
   useEffect(() => {
-    const q = query(
-      collection(db, "comments"),
-      filter === 'latest' ? orderBy("timestamp", "desc") : orderBy("likes", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    return () => unsubscribe();
+    fetchComments();
   }, [filter]);
 
-  const handleLike = async (id, currentLikes) => {
-    const commentRef = doc(db, "comments", id);
-    await updateDoc(commentRef, {
-      likes: currentLikes + 1
-    });
+  const fetchComments = async (direction = 'next') => {
+    setLoading(true);
+
+    try {
+      const commentsRef = collection(db, "comments");
+      let q;
+
+      if (direction === 'next') {
+        q = query(
+          commentsRef,
+          orderBy("timestamp", filter === "latest" ? "desc" : "asc"),
+          ...(lastVisible ? [startAfter(lastVisible)] : []), // Only include startAfter if lastVisible is defined
+          limit(commentsPerPage) // Always pass a positive limit
+        );
+      } else if (direction === 'prev') {
+        // For simplicity, fetching the first page again; advanced handling requires storing all fetched data
+        q = query(
+          commentsRef,
+          orderBy("timestamp", filter === "latest" ? "desc" : "asc"),
+          limit(commentsPerPage)
+        );
+      }
+
+      const snapshot = await getDocs(q); // Using getDocs to fetch the documents
+
+      if (!snapshot.empty) {
+        const fetchedComments = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setComments(fetchedComments);
+        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(snapshot.docs.length === commentsPerPage);
+        // toast.success('Comments loaded successfully.');
+      } else {
+        setHasMore(false);
+        toast.info('No more comments to load.');
+      }
+    } catch (error) {
+      console.error("Error fetching comments: ", error);
+      // toast.error('Failed to load comments.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setPage((prevPage) => prevPage + 1);
+      fetchComments('next');
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (page > 1) {
+      setPage((prevPage) => prevPage - 1);
+      fetchComments('prev');
+    }
+  };
+
+  const renderReplies = (parentId) => {
+    return comments
+      .filter((comment) => comment.parentId === parentId)
+      .map((reply) => (
+        <CommentItem
+          key={reply.id}
+          comment={reply}
+          user={user}
+          renderReplies={renderReplies}
+        />
+      ));
+  };
+
+  const renderComments = () => {
+    if (comments.length === 0) {
+      return <p>No comments yet. Be the first to comment!</p>;
+    }
+
+    return comments
+      .filter((comment) => !comment.parentId) // Only top-level comments
+      .map((comment) => (
+        <CommentItem
+          key={comment.id}
+          comment={comment}
+          user={user}
+          renderReplies={renderReplies}
+        />
+      ));
   };
 
   return (
     <div className="mt-4">
-      {comments.map((comment) => (
-        <div key={comment.id} className="bg-white shadow-md rounded p-4 mb-4">
-          <div className="flex items-center mb-2">
-            <img src={comment.photoURL} alt="" className="w-10 h-10 rounded-full mr-2" />
-            <div>
-              <h4 className="font-bold">{comment.author}</h4>
-              <p className="text-sm text-gray-500">{new Date(comment.timestamp?.toDate()).toLocaleString()}</p>
-            </div>
-          </div>
-          <p>{comment.content}</p>
-          {comment.fileURL && (
-            <div className="mt-2">
-              <a href={comment.fileURL} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                View Attachment
-              </a>
-            </div>
-          )}
-          <div className="flex items-center mt-2">
-            <button
-              onClick={() => handleLike(comment.id, comment.likes)}
-              className="flex items-center text-gray-500"
-            >
-              <ThumbUpIcon className="w-5 h-5 mr-1" />
-              {comment.likes}
-            </button>
-            <span className="ml-4">Reply</span>
-            <span className="ml-4">{Math.floor((Date.now() - comment.timestamp?.toDate()) / 3600000)} hour</span>
-          </div>
-        </div>
-      ))}
+      {loading && <p>Loading comments...</p>}
+      {renderComments()}
+
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={handlePrevPage}
+          disabled={page === 1}
+          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+        >
+          Previous
+        </button>
+        <button
+          onClick={handleNextPage}
+          disabled={!hasMore}
+          className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
