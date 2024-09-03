@@ -21,7 +21,7 @@ function CommentItem({ comment, user, renderReplies }) {
       let updatedReactions = { ...reactions };
       updatedReactions[reaction] += 1;
 
-      setReactions(updatedReactions); // Update local state first
+      setReactions(updatedReactions);
 
       const impressions = Object.values(updatedReactions).reduce((a, b) => a + b, 0);
 
@@ -84,6 +84,20 @@ function CommentItem({ comment, user, renderReplies }) {
     );
   };
 
+  // Function to render the comment text with mentions highlighted
+  const renderCommentContent = (content) => {
+    const parts = content.split(/(@\w+)/g); // Splitting by mentions
+    return parts.map((part, index) =>
+      part.startsWith("@") ? (
+        <span key={index} className="text-blue-500 font-semibold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   return (
     <div className="bg-white shadow-md rounded p-4 mb-4 ml-4">
       <div className="flex items-center mb-2">
@@ -93,7 +107,7 @@ function CommentItem({ comment, user, renderReplies }) {
           <p className="text-sm text-gray-500">{new Date(comment.timestamp?.toDate()).toLocaleString()}</p>
         </div>
       </div>
-      <p>{comment.content}</p>
+      <p>{renderCommentContent(comment.content)}</p> {/* Highlighting mentions */}
       {comment.fileURL && (
         <div className="mt-2">
           <img src={comment.fileURL} alt="Attachment" className="w-full h-auto rounded" />
@@ -148,6 +162,7 @@ function CommentItem({ comment, user, renderReplies }) {
             user={user}
             parentId={comment.id}
             onReply={() => setReplying(false)}
+            className="text-black"
           />
         </div>
       )}
